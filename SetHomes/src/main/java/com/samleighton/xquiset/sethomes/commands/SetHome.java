@@ -6,13 +6,18 @@ import com.samleighton.xquiset.sethomes.utils.ChatUtils;
 import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class SetHome implements CommandExecutor {
@@ -62,23 +67,22 @@ public class SetHome implements CommandExecutor {
                 //They have provided a home name and possibly description too
             } else {
                 if (p.hasPermission("homes.sethome")) {
-                    //Check if players amount of homes vs the config max homes allowed
-                    if (pl.hasNamedHomes(uuid)) {
-                        int maxHomes = getMaxHomesAllowed(p);
-                        Bukkit.getServer().getLogger().info("Max Homes: " + maxHomes);
-                        if ((pl.getPlayersNamedHomes(uuid).size() >= maxHomes && maxHomes != 0) && !p.hasPermission("homes.config_bypass")) {
-                            ChatUtils.sendInfo(p, pl.config.getString("max-homes-msg"));
-                            return true;
-                        }
-                        //Check if the player already has a home with the name they gave us
-                        if (pl.getPlayersNamedHomes(uuid).containsKey(args[0])) {
-                            ChatUtils.sendError(p, "You already have a home with that name, try a different one!");
-                            return true;
-                        }
+                    List<String> arguments = new ArrayList<>(Arrays.asList(args));
+                    boolean confirmOverwrite = false;
+                    if (!arguments.isEmpty() && arguments.get(arguments.size() - 1).equalsIgnoreCase("confirm")) {
+                        confirmOverwrite = true;
+                        arguments.remove(arguments.size() - 1);
                     }
 
+                    if (arguments.isEmpty()) {
+                        ChatUtils.sendError(p, "Please specify a home name before using confirm!");
+                        return true;
+                    }
+
+                    String originalInput = arguments.get(0);
+
                     // Cleanse the input argument of any non alphanumeric characters
-                    String homeName = args[0].replaceAll("[^a-zA-Z0-9]", "");
+                    String homeName = originalInput.replaceAll("[^a-zA-Z0-9]", "");
 
                     // Ensure that after cleansing the homename still has a value
                     if (homeName.length() > 0) {
@@ -89,21 +93,49 @@ public class SetHome implements CommandExecutor {
                         return true;
                     }
 
+                    boolean hasNamedHomes = pl.hasNamedHomes(uuid);
+                    Map<String, Home> namedHomes = hasNamedHomes ? pl.getPlayersNamedHomes(uuid) : new HashMap<>();
+                    boolean homeExists = namedHomes.containsKey(homeName);
+
+                    //Check if players amount of homes vs the config max homes allowed when creating a new home
+                    if (hasNamedHomes && !homeExists) {
+                        int maxHomes = getMaxHomesAllowed(p);
+                        Bukkit.getServer().getLogger().info("Max Homes: " + maxHomes);
+                        if ((namedHomes.size() >= maxHomes && maxHomes != 0) && !p.hasPermission("homes.config_bypass")) {
+                            ChatUtils.sendInfo(p, pl.config.getString("max-homes-msg"));
+                            return true;
+                        }
+                    }
+
+                    if (homeExists && !confirmOverwrite) {
+                        ChatUtils.sendInfo(p, ChatColor.YELLOW + "A home with that name already exists. Re-run "
+                                + ChatColor.GOLD + "/sethome " + homeName + " confirm "
+                                + ChatColor.YELLOW + "to overwrite it.");
+                        return true;
+                    }
 
                     //Build the description as a combination of all other arguments passed
                     StringBuilder desc = new StringBuilder();
-                    for (int i = 1; i <= args.length - 1; i++) {
-                        desc.append(args[i]).append(" ");
+                    for (int i = 1; i <= arguments.size() - 1; i++) {
+                        desc.append(arguments.get(i)).append(" ");
                     }
 
                     if (!desc.toString().equals("")) {
                         playersHome.setDesc(desc.substring(0, desc.length() - 1));
                     }
 
+                    if (homeExists) {
+                        pl.deleteNamedHome(uuid, homeName);
+                    }
+
                     //Save the new home
                     pl.saveNamedHome(uuid, playersHome);
 
-                    ChatUtils.sendSuccess(p, "Your home '" + playersHome.getHomeName() + "' has been set!");
+                    if (homeExists) {
+                        ChatUtils.sendSuccess(p, "Your home '" + playersHome.getHomeName() + "' has been updated!");
+                    } else {
+                        ChatUtils.sendSuccess(p, "Your home '" + playersHome.getHomeName() + "' has been set!");
+                    }
                     return true;
                 }
                 //Send player message because they didn't have the proper permissions

@@ -8,7 +8,7 @@ import com.samleighton.xquiset.sethomes.database.MySQLConnector;
 import com.samleighton.xquiset.sethomes.eventListeners.EventListener;
 import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.permission.Permission;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -26,7 +26,7 @@ import java.util.logging.Level;
 
 /**
  * @author Xquiset
- * @version 1.3.1
+ * @version 1.4.0
  */
 public class SetHomes extends JavaPlugin {
 
@@ -183,8 +183,11 @@ public class SetHomes extends JavaPlugin {
     private void registerCommands() {
         Objects.requireNonNull(this.getCommand("sethome")).setExecutor(new SetHome(this));
         Objects.requireNonNull(this.getCommand("homes")).setExecutor(new ListHomes(this));
+        HomeTabCompleter homeTabCompleter = new HomeTabCompleter(this);
         Objects.requireNonNull(this.getCommand("delhome")).setExecutor(new DeleteHome(this));
+        Objects.requireNonNull(this.getCommand("delhome")).setTabCompleter(homeTabCompleter);
         Objects.requireNonNull(this.getCommand("home")).setExecutor(new GoHome(this));
+        Objects.requireNonNull(this.getCommand("home")).setTabCompleter(homeTabCompleter);
         Objects.requireNonNull(this.getCommand("strike")).setExecutor(new Strike(this));
         Objects.requireNonNull(this.getCommand("blacklist")).setExecutor(new Blacklist(this));
         Objects.requireNonNull(this.getCommand("home-of")).setExecutor(new GoHome(this));
