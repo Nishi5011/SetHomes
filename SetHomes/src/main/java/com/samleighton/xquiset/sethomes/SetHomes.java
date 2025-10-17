@@ -319,6 +319,14 @@ public class SetHomes extends JavaPlugin {
 
                 // Create the home object so we can add the description to it
                 Location home = getHomeLocaleFromConfig(path);
+
+                if (home == null || home.getWorld() == null) {
+                    Bukkit.getServer().getLogger().log(Level.WARNING,
+                            LOG_PREFIX + "Skipping home '" + id + "' for player " + uuid
+                                    + " because its world is not available.");
+                    continue;
+                }
+
                 Home h = new Home(home);
 
                 // Check if there is a desc set
@@ -342,6 +350,11 @@ public class SetHomes extends JavaPlugin {
      */
     public Location getNamedHomeLocal(String uuid, String homeName) {
         Home h = getPlayersNamedHomes(uuid).get(homeName);
+
+        if (h == null) {
+            return null;
+        }
+
         return h.toLocation();
     }
 
@@ -474,8 +487,18 @@ public class SetHomes extends JavaPlugin {
 
                 if (rs != null) {
                     while (rs.next()) {
+                        String worldName = rs.getString("world");
+                        World world = Bukkit.getWorld(worldName);
+
+                        if (world == null) {
+                            Bukkit.getServer().getLogger().log(Level.WARNING,
+                                    LOG_PREFIX + "Skipping unnamed home for player " + uuid
+                                            + " because world '" + worldName + "' is not loaded.");
+                            continue;
+                        }
+
                         homeLocation = new Location(
-                                Bukkit.getWorld(rs.getString("world")),
+                                world,
                                 rs.getDouble("x"),
                                 rs.getDouble("y"),
                                 rs.getDouble("z"),
@@ -494,6 +517,13 @@ public class SetHomes extends JavaPlugin {
             String path = "unknownHomes." + uuid;
             homesCfg = getHomes().getConfig();
             homeLocation = getHomeLocaleFromConfig(path);
+
+            if (homeLocation != null && homeLocation.getWorld() == null) {
+                Bukkit.getServer().getLogger().log(Level.WARNING,
+                        LOG_PREFIX + "Skipping unnamed home for player " + uuid
+                                + " because its world is not available.");
+                homeLocation = null;
+            }
         }
 
         // Return the home as a location
@@ -578,12 +608,23 @@ public class SetHomes extends JavaPlugin {
      * @return the location object of the home
      */
     private Location getHomeLocaleFromConfig(String path) {
-        World world = getServer().getWorld(Objects.requireNonNull(homesCfg.getString(path + ".world")));
+        String worldName = homesCfg.getString(path + ".world");
+
+        if (worldName == null) {
+            return null;
+        }
+
+        World world = getServer().getWorld(worldName);
+
+        if (world == null) {
+            return null;
+        }
+
         double x = homesCfg.getDouble(path + ".x");
         double y = homesCfg.getDouble(path + ".y");
         double z = homesCfg.getDouble(path + ".z");
-        float pitch = Float.parseFloat(Objects.requireNonNull(homesCfg.getString(path + ".pitch")));
-        float yaw = Float.parseFloat(Objects.requireNonNull(homesCfg.getString(path + ".yaw")));
+        float pitch = (float) homesCfg.getDouble(path + ".pitch");
+        float yaw = (float) homesCfg.getDouble(path + ".yaw");
 
         return new Location(world, x, y, z, pitch, yaw);
     }

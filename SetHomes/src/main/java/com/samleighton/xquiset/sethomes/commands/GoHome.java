@@ -166,6 +166,13 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                 ChatUtils.sendError(p, "You have no Default Home!");
                 return false;
             } else {
+                final Location target = pl.getPlayersUnnamedHome(uuid);
+
+                if (target == null) {
+                    ChatUtils.sendError(p, "Your default home could not be found because its world is unavailable.");
+                    return false;
+                }
+
                 //Teleport the player to their home and send them a message telling them so
                 if (pl.getConfig().getInt("tp-delay") > 0 && !p.hasPermission("homes.config_bypass")) {
                     //Run a timer to countdown the amount of time for tp delay and display a message on the users screen
@@ -177,7 +184,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                                 //Cancel this repeating task
                                 pl.cancelTask(taskId);
                                 //Teleport the player to their home
-                                p.teleport(pl.getPlayersUnnamedHome(uuid));
+                                p.teleport(target);
                                 //Spawn particles at players feet after teleport
                                 p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                                 //Play note on teleport
@@ -196,7 +203,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                     }, 0L, 20L);
                 } else {
                     //tp delay was not active in config so we teleport without starting repeating task
-                    p.teleport(pl.getPlayersUnnamedHome(uuid));
+                    p.teleport(target);
                     //Spawn particles at players feet after teleport
                     p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                     //Player note on teleport
@@ -218,6 +225,14 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                 ChatUtils.sendError(p, "You have no homes by that name!");
                 return false;
             }
+
+            final Location target = pl.getNamedHomeLocal(uuid, args[0]);
+
+            if (target == null) {
+                ChatUtils.sendError(p, "That home could not be found because its world is unavailable.");
+                return false;
+            }
+
             final String homeName = args[0];
             //Teleport the player to there home and send them a message telling them so
             if (pl.getConfig().getInt("tp-delay") > 0 && !p.hasPermission("homes.config_bypass")) {
@@ -229,7 +244,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                         if (delay == 0) {
                             pl.cancelTask(taskId);
                             //Teleport the player to their home
-                            p.teleport(pl.getNamedHomeLocal(uuid, homeName));
+                            p.teleport(target);
                             //Spawn particles at players feet after teleport
                             p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                             //Play note on teleport
@@ -248,7 +263,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                 }, 0L, 20L);
             } else {
                 //Teleport the player to their home
-                p.teleport(pl.getNamedHomeLocal(uuid, args[0]));
+                p.teleport(target);
                 //Spawn particles at players feet after teleport
                 p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                 //Play note on teleport
@@ -277,6 +292,13 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                 ChatUtils.sendError(p, "The player " + ChatColor.WHITE + ChatColor.BOLD + args[0] + ChatColor.DARK_RED + " has no default home set!");
                 return false;
             } else {
+                final Location target = pl.getPlayersUnnamedHome(uuid);
+
+                if (target == null) {
+                    ChatUtils.sendError(p, "The player " + ChatColor.WHITE + ChatColor.BOLD + args[0] + ChatColor.DARK_RED + " has a default home in an unavailable world.");
+                    return false;
+                }
+
                 //Teleport the player to the home and send them a message telling them so
                 if (pl.getConfig().getInt("tp-delay") > 0 && !p.hasPermission("homes.config_bypass")) {
                     //Run a timer to countdown the amount of time for tp delay and display a message on the users screen
@@ -288,7 +310,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                                 //Cancel this repeating task
                                 pl.cancelTask(taskId);
                                 //Teleport the player to their home
-                                p.teleport(pl.getPlayersUnnamedHome(uuid));
+                                p.teleport(target);
                                 //Spawn particles at players feet after teleport
                                 p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                                 //Play note on teleport
@@ -307,7 +329,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                     }, 0L, 20L);
                 } else {
                     //tp delay was not active in config so we teleport without starting repeating task
-                    p.teleport(pl.getPlayersUnnamedHome(uuid));
+                    p.teleport(target);
                     //Spawn particles at players feet after teleport
                     p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                     //Play note on teleport
@@ -326,6 +348,13 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                 return false;
             }
 
+            final Location target = pl.getNamedHomeLocal(uuid, homeName);
+
+            if (target == null) {
+                ChatUtils.sendError(p, "That home could not be found because its world is unavailable.");
+                return false;
+            }
+
             //Teleport the player to there home and send them a message telling them so
             if (pl.getConfig().getInt("tp-delay") > 0 && !p.hasPermission("homes.config_bypass")) {
                 //Run a timer to countdown the amount of time for tp delay and display a message on the users screen
@@ -336,7 +365,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                         if (delay == 0) {
                             pl.cancelTask(taskId);
                             //Teleport the player to their home
-                            p.teleport(pl.getNamedHomeLocal(uuid, homeName));
+                            p.teleport(target);
                             //Spawn particles at players feet after teleport
                             p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                             //Play note on teleport
@@ -355,7 +384,7 @@ public class GoHome implements CommandExecutor, Listener, TabCompleter {
                 }, 0L, 20L);
             } else {
                 //Teleport the player to their home
-                p.teleport(pl.getNamedHomeLocal(uuid, args[1]));
+                p.teleport(target);
                 //Spawn particles at players feet after teleport
                 p.spawnParticle(Particle.PORTAL, p.getLocation(), 100);
                 //Play note on teleport
