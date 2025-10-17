@@ -7,16 +7,22 @@ import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public class GoHome implements CommandExecutor, Listener {
+public class GoHome implements CommandExecutor, Listener, TabCompleter {
 
     private final SetHomes pl;
     private int taskId;
@@ -110,6 +116,40 @@ public class GoHome implements CommandExecutor, Listener {
             return teleportHomeOf(p, uuid, args);
         }
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!(sender instanceof Player player)) {
+            return Collections.emptyList();
+        }
+
+        if (command.getName().equalsIgnoreCase("home")) {
+            if (args.length == 0) {
+                return getPlayerHomeNames(player, "");
+            }
+
+            if (args.length == 1) {
+                return getPlayerHomeNames(player, args[0]);
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    private List<String> getPlayerHomeNames(Player player, String query) {
+        String uuid = player.getUniqueId().toString();
+
+        if (!pl.hasNamedHomes(uuid)) {
+            return Collections.emptyList();
+        }
+
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+
+        return pl.getPlayersNamedHomes(uuid).keySet().stream()
+                .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(lowerQuery))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

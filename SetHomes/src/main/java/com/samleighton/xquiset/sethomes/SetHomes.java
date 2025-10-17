@@ -12,6 +12,8 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,7 +28,7 @@ import java.util.logging.Level;
 
 /**
  * @author Xquiset
- * @version 1.3.1
+ * @version 1.4.0
  */
 public class SetHomes extends JavaPlugin {
 
@@ -181,16 +183,29 @@ public class SetHomes extends JavaPlugin {
      * commands
      */
     private void registerCommands() {
-        Objects.requireNonNull(this.getCommand("sethome")).setExecutor(new SetHome(this));
-        Objects.requireNonNull(this.getCommand("homes")).setExecutor(new ListHomes(this));
-        Objects.requireNonNull(this.getCommand("delhome")).setExecutor(new DeleteHome(this));
-        Objects.requireNonNull(this.getCommand("home")).setExecutor(new GoHome(this));
+        SetHome setHome = new SetHome(this);
+        ListHomes listHomes = new ListHomes(this);
+        DeleteHome deleteHome = new DeleteHome(this);
+        GoHome goHome = new GoHome(this);
+        UpdateHome updateHome = new UpdateHome(this);
+
+        Objects.requireNonNull(this.getCommand("sethome")).setExecutor(setHome);
+        Objects.requireNonNull(this.getCommand("homes")).setExecutor(listHomes);
+
+        PluginCommand delhome = Objects.requireNonNull(this.getCommand("delhome"));
+        delhome.setExecutor(deleteHome);
+        delhome.setTabCompleter(deleteHome);
+
+        PluginCommand home = Objects.requireNonNull(this.getCommand("home"));
+        home.setExecutor(goHome);
+        home.setTabCompleter(goHome);
+
         Objects.requireNonNull(this.getCommand("strike")).setExecutor(new Strike(this));
         Objects.requireNonNull(this.getCommand("blacklist")).setExecutor(new Blacklist(this));
-        Objects.requireNonNull(this.getCommand("home-of")).setExecutor(new GoHome(this));
-        Objects.requireNonNull(this.getCommand("delhome-of")).setExecutor(new DeleteHome(this));
-        Objects.requireNonNull(this.getCommand("uhome")).setExecutor(new UpdateHome(this));
-        Objects.requireNonNull(this.getCommand("uhome-of")).setExecutor(new UpdateHome(this));
+        Objects.requireNonNull(this.getCommand("home-of")).setExecutor(goHome);
+        Objects.requireNonNull(this.getCommand("delhome-of")).setExecutor(deleteHome);
+        Objects.requireNonNull(this.getCommand("uhome")).setExecutor(updateHome);
+        Objects.requireNonNull(this.getCommand("uhome-of")).setExecutor(updateHome);
         Objects.requireNonNull(this.getCommand("setmax")).setExecutor(new SetMax(this));
     }
 
@@ -292,8 +307,14 @@ public class SetHomes extends JavaPlugin {
             String homesPath = "allNamedHomes." + uuid;
             homesCfg = getHomes().getConfig();
 
+            ConfigurationSection section = homesCfg.getConfigurationSection(homesPath);
+
+            if (section == null) {
+                return playersNamedHomes;
+            }
+
             // Loop through the players home list and create a hash map with the home names as a key and home as value
-            for (String id : Objects.requireNonNull(homesCfg.getConfigurationSection(homesPath)).getKeys(false)) {
+            for (String id : section.getKeys(false)) {
                 String path = homesPath + "." + id + ".";
 
                 // Create the home object so we can add the description to it
