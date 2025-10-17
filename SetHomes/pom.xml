@@ -10,13 +10,17 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
         </plugins>
     </build>
     <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
@@ -28,9 +32,10 @@
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
-            <version>1.16.5-R0.1-SNAPSHOT</version><!--change this value depending on the version or use LATEST-->
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.21.8-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
