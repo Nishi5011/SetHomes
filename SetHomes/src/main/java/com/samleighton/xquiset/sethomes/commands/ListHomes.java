@@ -1,7 +1,12 @@
 package com.samleighton.xquiset.sethomes.commands;
 
+import com.samleighton.xquiset.sethomes.Home;
 import com.samleighton.xquiset.sethomes.SetHomes;
 import com.samleighton.xquiset.sethomes.utils.ChatUtils;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -11,9 +16,14 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 
 public class ListHomes implements CommandExecutor {
+
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.legacySection();
 
     private final SetHomes pl;
     private final String filler = StringUtils.repeat("-", 53);
@@ -70,24 +80,34 @@ public class ListHomes implements CommandExecutor {
      * @param p,    the player object to check homes for
      * @param uuid, the uuid of the player object as a string
      */
-    private void checkForNamedHomes(Player p, String uuid) {
+    private void sendNamedHomes(Player viewer, String uuid, Function<String, String> commandBuilder, Function<String, String> hoverBuilder) {
         if (pl.hasNamedHomes(uuid)) {
-            //Print the home with its description to the player
-            for (String id : pl.getPlayersNamedHomes(uuid).keySet()) {
-                //Gets the name of the world the home has been set in
-                String world = pl.getPlayersNamedHomes(uuid).get(id).getWorld();
-                //Gets the description for the home
-                String desc = pl.getPlayersNamedHomes(uuid).get(id).getDesc();
+            Map<String, Home> homes = pl.getPlayersNamedHomes(uuid);
+
+            for (Map.Entry<String, Home> entry : homes.entrySet()) {
+                String homeName = entry.getKey();
+                Home home = entry.getValue();
+                String world = home.getWorld();
+                String desc = home.getDesc();
+
+                StringBuilder messageBuilder = new StringBuilder();
+                messageBuilder.append(ChatColor.DARK_AQUA).append("Name: ")
+                        .append(ChatColor.WHITE).append(homeName)
+                        .append(ChatColor.DARK_GRAY).append(" | ")
+                        .append(ChatColor.DARK_AQUA).append("World: ")
+                        .append(ChatColor.WHITE).append(world);
+
                 if (desc != null) {
-                    //Send message with description
-                    p.sendMessage(ChatColor.DARK_AQUA + "Name: " + ChatColor.WHITE + id + ChatColor.DARK_GRAY + " | " + ChatColor.DARK_AQUA + "World: " + ChatColor.WHITE + world + ChatColor.DARK_GRAY + " | " + ChatColor.DARK_AQUA + "Desc: " + ChatColor.WHITE + desc);
-                } else {
-                    //Send message without description
-                    p.sendMessage(ChatColor.DARK_AQUA + "Name: " + ChatColor.WHITE + id + ChatColor.DARK_GRAY + " | " + ChatColor.DARK_AQUA + "World: " + ChatColor.WHITE + world);
+                    messageBuilder.append(ChatColor.DARK_GRAY).append(" | ")
+                            .append(ChatColor.DARK_AQUA).append("Desc: ")
+                            .append(ChatColor.WHITE).append(desc);
                 }
+
+                sendClickableLine(viewer, messageBuilder.toString(), commandBuilder.apply(homeName), hoverBuilder.apply(homeName));
             }
         }
-        p.sendMessage(filler);
+
+        viewer.sendMessage(filler);
     }
 
     /**
@@ -108,11 +128,21 @@ public class ListHomes implements CommandExecutor {
         if (pl.hasUnknownHomes(uuid)) {
             //Gets the name of the world the home has been set in
             String world = pl.getPlayersUnnamedHome(uuid).getWorld().getName();
-            p.sendMessage(ChatColor.GOLD + "Default Home" + ChatColor.DARK_GRAY + " | " + ChatColor.DARK_AQUA + "World: " + ChatColor.WHITE + world);
+            sendClickableLine(
+                    p,
+                    ChatColor.GOLD + "Default Home" + ChatColor.DARK_GRAY + " | " + ChatColor.DARK_AQUA + "World: " + ChatColor.WHITE + world,
+                    "/home",
+                    ChatColor.YELLOW + "Click to teleport to your default home."
+            );
         }
 
         //Check to make sure the player has homes
-        checkForNamedHomes(p, uuid);
+        sendNamedHomes(
+                p,
+                uuid,
+                homeName -> "/home " + homeName,
+                homeName -> ChatColor.YELLOW + "Click to teleport to home '" + homeName + "'."
+        );
     }
 
     /**
@@ -124,19 +154,39 @@ public class ListHomes implements CommandExecutor {
      */
     private void listHomes(UUID playerUUID, Player sender) {
         String uuid = playerUUID.toString();
+        String targetName = Objects.requireNonNullElse(Bukkit.getOfflinePlayer(playerUUID).getName(), "Unknown");
 
-        sender.sendMessage(ChatColor.BOLD + "Homes currently set for the player - " + Bukkit.getOfflinePlayer(playerUUID).getName());
+        sender.sendMessage(ChatColor.BOLD + "Homes currently set for the player - " + targetName);
         sender.sendMessage(filler);
 
         //Tell the player if they have a default home set or not
         if (pl.hasUnknownHomes(uuid)) {
             //Gets the name of the world the home has been set in
             String world = pl.getPlayersUnnamedHome(uuid).getWorld().getName();
-            sender.sendMessage(ChatColor.GOLD + "Default Home - World: " + world);
+            sendClickableLine(
+                    sender,
+                    ChatColor.GOLD + "Default Home - World: " + world,
+                    "/home-of " + targetName,
+                    ChatColor.YELLOW + "Click to teleport to " + targetName + "'s default home."
+            );
         }
 
         //Check to make sure the player has homes
-        checkForNamedHomes(sender, uuid);
+        sendNamedHomes(
+                sender,
+                uuid,
+                homeName -> "/home-of " + targetName + " " + homeName,
+                homeName -> ChatColor.YELLOW + "Click to teleport to " + targetName + "'s home '" + homeName + "'."
+        );
+    }
+
+    private void sendClickableLine(Player player, String legacyMessage, String command, String hoverMessage) {
+        Component base = LEGACY_SERIALIZER.deserialize(legacyMessage);
+        Component hover = LEGACY_SERIALIZER.deserialize(hoverMessage);
+
+        player.sendMessage(base
+                .clickEvent(ClickEvent.runCommand(command))
+                .hoverEvent(HoverEvent.showText(hover)));
     }
 
 }
