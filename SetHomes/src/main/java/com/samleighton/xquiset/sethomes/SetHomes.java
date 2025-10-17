@@ -321,9 +321,6 @@ public class SetHomes extends JavaPlugin {
                 Location home = getHomeLocaleFromConfig(path);
 
                 if (home == null || home.getWorld() == null) {
-                    Bukkit.getServer().getLogger().log(Level.WARNING,
-                            LOG_PREFIX + "Skipping home '" + id + "' for player " + uuid
-                                    + " because its world is not available.");
                     continue;
                 }
 
@@ -491,9 +488,6 @@ public class SetHomes extends JavaPlugin {
                         World world = Bukkit.getWorld(worldName);
 
                         if (world == null) {
-                            Bukkit.getServer().getLogger().log(Level.WARNING,
-                                    LOG_PREFIX + "Skipping unnamed home for player " + uuid
-                                            + " because world '" + worldName + "' is not loaded.");
                             continue;
                         }
 
@@ -519,9 +513,6 @@ public class SetHomes extends JavaPlugin {
             homeLocation = getHomeLocaleFromConfig(path);
 
             if (homeLocation != null && homeLocation.getWorld() == null) {
-                Bukkit.getServer().getLogger().log(Level.WARNING,
-                        LOG_PREFIX + "Skipping unnamed home for player " + uuid
-                                + " because its world is not available.");
                 homeLocation = null;
             }
         }
