@@ -184,7 +184,9 @@ public class SetHomes extends JavaPlugin {
         Objects.requireNonNull(this.getCommand("sethome")).setExecutor(new SetHome(this));
         Objects.requireNonNull(this.getCommand("homes")).setExecutor(new ListHomes(this));
         Objects.requireNonNull(this.getCommand("delhome")).setExecutor(new DeleteHome(this));
+        Objects.requireNonNull(this.getCommand("delhome")).setTabCompleter(new HomeTabCompleter(this));
         Objects.requireNonNull(this.getCommand("home")).setExecutor(new GoHome(this));
+        Objects.requireNonNull(this.getCommand("home")).setTabCompleter(new HomeTabCompleter(this));
         Objects.requireNonNull(this.getCommand("strike")).setExecutor(new Strike(this));
         Objects.requireNonNull(this.getCommand("blacklist")).setExecutor(new Blacklist(this));
         Objects.requireNonNull(this.getCommand("home-of")).setExecutor(new GoHome(this));
