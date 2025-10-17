@@ -12,6 +12,7 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,7 +27,7 @@ import java.util.logging.Level;
 
 /**
  * @author Xquiset
- * @version 1.3.1
+ * @version 1.4.0
  */
 public class SetHomes extends JavaPlugin {
 
@@ -192,6 +193,10 @@ public class SetHomes extends JavaPlugin {
         Objects.requireNonNull(this.getCommand("uhome")).setExecutor(new UpdateHome(this));
         Objects.requireNonNull(this.getCommand("uhome-of")).setExecutor(new UpdateHome(this));
         Objects.requireNonNull(this.getCommand("setmax")).setExecutor(new SetMax(this));
+
+        HomeTabCompleter homeTabCompleter = new HomeTabCompleter(this);
+        Objects.requireNonNull(this.getCommand("home")).setTabCompleter(homeTabCompleter);
+        Objects.requireNonNull(this.getCommand("delhome")).setTabCompleter(homeTabCompleter);
     }
 
     /**
@@ -292,20 +297,23 @@ public class SetHomes extends JavaPlugin {
             String homesPath = "allNamedHomes." + uuid;
             homesCfg = getHomes().getConfig();
 
-            // Loop through the players home list and create a hash map with the home names as a key and home as value
-            for (String id : Objects.requireNonNull(homesCfg.getConfigurationSection(homesPath)).getKeys(false)) {
-                String path = homesPath + "." + id + ".";
+            ConfigurationSection section = homesCfg.getConfigurationSection(homesPath);
+            if (section != null) {
+                // Loop through the players home list and create a hash map with the home names as a key and home as value
+                for (String id : section.getKeys(false)) {
+                    String path = homesPath + "." + id;
 
-                // Create the home object so we can add the description to it
-                Location home = getHomeLocaleFromConfig(path);
-                Home h = new Home(home);
+                    // Create the home object so we can add the description to it
+                    Location home = getHomeLocaleFromConfig(path);
+                    Home h = new Home(home);
 
-                // Check if there is a desc set
-                if (homesCfg.isSet(path + ".desc")) {
-                    h.setDesc(homesCfg.getString(path + ".desc"));
+                    // Check if there is a desc set
+                    if (homesCfg.isSet(path + ".desc")) {
+                        h.setDesc(homesCfg.getString(path + ".desc"));
+                    }
+
+                    playersNamedHomes.put(id, h);
                 }
-
-                playersNamedHomes.put(id, h);
             }
         }
 
