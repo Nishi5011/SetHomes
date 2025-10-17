@@ -2,8 +2,7 @@ package com.samleighton.xquiset.sethomes;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-
-import java.util.Objects;
+import org.bukkit.World;
 
 public class Home {
 
@@ -19,7 +18,9 @@ public class Home {
 
     //Instantiate data
     public Home(Location l) {
-        setWorld(Objects.requireNonNull(l.getWorld()).getName());
+        if (l.getWorld() != null) {
+            setWorld(l.getWorld().getName());
+        }
         setX(l.getX());
         setY(l.getY());
         setZ(l.getZ());
@@ -154,15 +155,28 @@ public class Home {
      * @return the home as a location object
      */
     public Location toLocation() {
-        return new Location(Bukkit.getServer().getWorld(this.getWorld()), getX(), getY(), getZ(), getYaw(), getPitch());
+        if (this.getWorld() == null) {
+            return null;
+        }
+
+        World world = Bukkit.getServer().getWorld(this.getWorld());
+
+        if (world == null) {
+            return null;
+        }
+
+        return new Location(world, getX(), getY(), getZ(), getYaw(), getPitch());
     }
 
     /**
      * @return return the home object as a string
      */
     public String toString() {
+        Location location = toLocation();
+        String locationString = location != null ? location.toString() : "Unavailable";
+
         return "Home Name: " + getHomeName() + "\n" +
                 "Home Desc: " + getDesc() + "\n" +
-                "Location: " + toLocation().toString() + "\n";
+                "Location: " + locationString + "\n";
     }
 }

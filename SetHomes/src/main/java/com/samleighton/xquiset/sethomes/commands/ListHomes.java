@@ -10,6 +10,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -126,14 +127,20 @@ public class ListHomes implements CommandExecutor {
 
         //Tell the player if they have a default home set or not
         if (pl.hasUnknownHomes(uuid)) {
-            //Gets the name of the world the home has been set in
-            String world = pl.getPlayersUnnamedHome(uuid).getWorld().getName();
-            sendClickableLine(
-                    p,
-                    ChatColor.GOLD + "Default Home" + ChatColor.DARK_GRAY + " | " + ChatColor.DARK_AQUA + "World: " + ChatColor.WHITE + world,
-                    "/home",
-                    ChatColor.YELLOW + "Click to teleport to your default home."
-            );
+            Location defaultHome = pl.getPlayersUnnamedHome(uuid);
+
+            if (defaultHome != null && defaultHome.getWorld() != null) {
+                //Gets the name of the world the home has been set in
+                String world = defaultHome.getWorld().getName();
+                sendClickableLine(
+                        p,
+                        ChatColor.GOLD + "Default Home" + ChatColor.DARK_GRAY + " | " + ChatColor.DARK_AQUA + "World: " + ChatColor.WHITE + world,
+                        "/home",
+                        ChatColor.YELLOW + "Click to teleport to your default home."
+                );
+            } else {
+                ChatUtils.sendError(p, "Your default home could not be listed because its world is unavailable.");
+            }
         }
 
         //Check to make sure the player has homes
@@ -161,14 +168,20 @@ public class ListHomes implements CommandExecutor {
 
         //Tell the player if they have a default home set or not
         if (pl.hasUnknownHomes(uuid)) {
-            //Gets the name of the world the home has been set in
-            String world = pl.getPlayersUnnamedHome(uuid).getWorld().getName();
-            sendClickableLine(
-                    sender,
-                    ChatColor.GOLD + "Default Home - World: " + world,
-                    "/home-of " + targetName,
-                    ChatColor.YELLOW + "Click to teleport to " + targetName + "'s default home."
-            );
+            Location defaultHome = pl.getPlayersUnnamedHome(uuid);
+
+            if (defaultHome != null && defaultHome.getWorld() != null) {
+                //Gets the name of the world the home has been set in
+                String world = defaultHome.getWorld().getName();
+                sendClickableLine(
+                        sender,
+                        ChatColor.GOLD + "Default Home - World: " + world,
+                        "/home-of " + targetName,
+                        ChatColor.YELLOW + "Click to teleport to " + targetName + "'s default home."
+                );
+            } else {
+                ChatUtils.sendError(sender, targetName + "'s default home could not be listed because its world is unavailable.");
+            }
         }
 
         //Check to make sure the player has homes
